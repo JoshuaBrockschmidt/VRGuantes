@@ -25,7 +25,7 @@ WARNFLAGS   += -Wno-unused-but-set-variable -Wno-unused-result
 WARNFLAGS   += -Wwrite-strings -Wdisabled-optimization -Wpointer-arith
 WARNFLAGS   += -Werror
 CFLAGS      := $(INCLUDES) $(BASEFLAGS)
-CFLAGS      += -std=c++98
+CFLAGS      += -std=c++11
 
 OS := $(shell uname)
 ARCH := $(shell uname -m)
