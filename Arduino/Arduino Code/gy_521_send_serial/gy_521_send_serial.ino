@@ -1,4 +1,3 @@
-
 // MPU-6050 Accelerometer + Gyro
 // -----------------------------
 //
@@ -45,7 +44,7 @@
 // at 0x02 ... 0x18, but according other information 
 // the registers in that unknown area are for gain 
 // and offsets.
-// 
+//
 #define MPU6050_AUX_VDDIO          0x01   // R/W
 #define MPU6050_SMPLRT_DIV         0x19   // R/W
 #define MPU6050_CONFIG             0x1A   // R/W
@@ -621,6 +620,12 @@
 #define MPU6050_I2C_ADDRESS 0x68
 
 
+//finger pin macro definitions
+#define PINKY_PIN A8
+#define RING_PIN A10
+#define MIDDLE_PIN A12
+#define POINTER_PIN A14
+
 // Declaring an union for the registers and the axis values.
 // The byte order does not match the byte order of 
 // the compiler and AVR chip.
@@ -776,14 +781,27 @@ void calibrate_sensors() {
   //Serial.println("Finishing Calibration");
 }
 
+char MaxPinkyResistance; //The max resistance recieved from user
+char MinPinkyResistance; //The min resistance recieved from user
+char MaxRingResistance;
+char MinRingResistance;
+char MaxMiddleResistance;
+char MinMiddleResistance;
+char MaxPointerResistance;
+char MinPointerResistance;
+char MaxMinShiftReady; //prevents Max / Min from shifting multiple times a second
+
+#define ShiftTime = 30;
+#define ShiftReadyTime = 40;
 
 void setup()
-{      
+{   
   int error;
   uint8_t c;
 
 
   Serial.begin(19200);
+  Serial.println("FUCK");
   /*
   Serial.println(F("InvenSense MPU-6050"));
   Serial.println(F("June 2012"));
@@ -826,14 +844,46 @@ void setup()
   //Initialize the angles
   calibrate_sensors();  
   set_last_read_angle_data(millis(), 0, 0, 0, 0, 0, 0);
+
+  //finger pins mode set to INPUT_PULLUP
+  pinMode(PINKY_PIN, INPUT_PULLUP);
+  pinMode(RING_PIN, INPUT_PULLUP);
+  pinMode(MIDDLE_PIN, INPUT_PULLUP);
+  pinMode(POINTER_PIN, INPUT_PULLUP);
+
+
+char MaxPinkyResistance; //The max resistance recieved from user
+char MinPinkyResistance; //The min resistance recieved from user
+char MaxRingResistance;
+char MinRingResistance;
+char MaxMiddleResistance;
+char MinMiddleResistance;
+char MaxPointerResistance;
+char MinPointerResistance;
+char MaxMinShiftReady; //prevents Max / Min from shifting multiple times a second
+
+  //set max and min values to default boot up values
+  MaxPinkyResistance = 375;
+  MinPinkyResistance = 320;
+  MaxRingResistance = 500;
+  MinRingResistance = 400;
+  MaxMiddleResistance = 310;
+  MinMiddleResistance = 290;
+  MaxPointerResistance = 480;
+  MinPointerResistance = 400;
 }
 
 
 void loop()
-{
+{ 
   int error;
   double dT;
   accel_t_gyro_union accel_t_gyro;
+  //finger variables declairations
+  float pinkyVal;
+  float ringVal;
+  float middleVal;
+  float pointerVal;
 
   /*
   Serial.println(F(""));
@@ -931,6 +981,12 @@ void loop()
   
   // Update the saved data with the latest values
   set_last_read_angle_data(t_now, angle_x, angle_y, angle_z, unfiltered_gyro_angle_x, unfiltered_gyro_angle_y, unfiltered_gyro_angle_z);
+
+  //finger variables assignment
+  pinkyVal = analogRead(PINKY_PIN);
+  ringVal = analogRead(RING_PIN);
+  middleVal = analogRead(MIDDLE_PIN);
+  pointerVal = analogRead(POINTER_PIN);
   
   // Send the data to the serial port
   Serial.print(F("DEL:"));              //Delta T
@@ -953,8 +1009,37 @@ void loop()
   Serial.print(angle_y, 2);
   Serial.print(F(","));
   Serial.print(angle_z, 2);
-  Serial.println(F(""));
+  Serial.print(F(""));
   
+  //update MAX and MIN
+  if(pinkyVal > MaxPinkyResistance)
+    MaxPinkyResistance = pinkyVal;
+  else if(pinkyVal < MinPinkyResistance)
+    MinPinkyResistance = pinkyVal;
+  if(ringVal > MaxRingResistance)
+    MaxRingResistance = ringVal;
+  else if(ringVal < MinRingResistance)
+    MinRingResistance = ringVal;
+  if(middleVal > MaxMiddleResistance)
+    MaxMiddleResistance = middleVal;
+  else if(middleVal < MinMiddleResistance)
+    MinMiddleResistance = middleVal;
+  if(pointerVal > MaxPointerResistance)
+    MaxPointerResistance = pointerVal;
+  else if(pointerVal < MinPointerResistance)
+    MinPointerResistance = pointerVal;
+
+  map(pinkyVal,   MaxPinkyResistance,    MinPinkyResistance,   0, 255);
+  map(ringVal,    MaxRingResistance,     MinRingResistance,    0, 255);
+  map(middleVal,  MaxMiddleResistance,   MinMiddleResistance,  0, 255);
+  map(pointerVal, MaxPointerResistance,  MinPointerResistance, 0, 255);
+  
+  //print finger values to Serial
+  Serial.print("#FPi:"); Serial.print(pinkyVal);
+  Serial.print("#FRi:"); Serial.print(ringVal);
+  Serial.print("#FMi:"); Serial.print(middleVal);
+  Serial.print("#FPo:"); Serial.println(pointerVal);
+
   // Delay so we don't swamp the serial port
   delay(5);
 }

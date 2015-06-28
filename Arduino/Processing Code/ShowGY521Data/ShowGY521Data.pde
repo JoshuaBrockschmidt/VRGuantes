@@ -12,7 +12,7 @@
 import processing.serial.*;
 
 Serial  myPort;
-short   portIndex = 1;
+short   portIndex = 0;
 int     lf = 10;       //ASCII linefeed
 String  inString;      //String for testing serial communication
 int     calibrating;
@@ -28,18 +28,24 @@ float   x_fil;  //Filtered data
 float   y_fil;
 float   z_fil;
 
+float   pinky_finger;  //finger data
+float   ring_finger;
+float   middle_finger;
+float   pointer_finger;
+
+
+
  
 void setup()  { 
-//  size(640, 360, P3D); 
-  size(1400, 800, P3D);
+  size(640, 360, P3D); 
+//  size(1400, 800, P3D);
   noStroke();
   colorMode(RGB, 256); 
- 
 //  println("in setup");
   String portName = Serial.list()[portIndex];
 //  println(Serial.list());
 //  println(" Connecting to -> " + Serial.list()[portIndex]);
-  myPort = new Serial(this, portName, 38400);
+  myPort = new Serial(this, portName, 19200);
   myPort.clear();
   myPort.bufferUntil(lf);
 } 
@@ -123,11 +129,26 @@ void draw_rect(int r, int g, int b) {
   
 }
 
-void draw()  { 
-  
+void draw()  {  
   background(0);
   lights();
-    
+  
+  tweekMPU();
+  
+  MPU_Data();
+
+  printMPU();
+  
+  printFingers();
+} 
+
+void tweekMPU(){
+  // Tweak the view of the rectangles
+  int distance = 50;
+  int x_rotation = 90;
+}
+
+void MPU_Data(){
   // Tweak the view of the rectangles
   int distance = 50;
   int x_rotation = 90;
@@ -156,7 +177,9 @@ void draw()  {
   rotateY(radians(-y_fil));
   draw_rect(93, 175, 83);
   popMatrix();
- 
+}
+
+void printMPU(){
   textSize(24);
   String accStr = "(" + (int) x_acc + ", " + (int) y_acc + ")";
   String gyrStr = "(" + (int) x_gyr + ", " + (int) y_gyr + ")";
@@ -174,11 +197,21 @@ void draw()  {
   fill(83, 175, 93);
   text("Combination", (int) (5.0*width/6.0) - 40, 25);
   text(filStr, (int) (5.0*width/6.0) - 20, 50);
+}
 
-} 
+void printFingers(){
+ textSize(10);
+ fill(map(pinky_finger, 0, 1023, 0, 255));
+ rect(20, 330, 20, 20);
+ fill(map(ring_finger, 0, 1023, 0, 255));
+ rect(50, 330, 20, 20);
+ fill(map(middle_finger, 0, 1023, 0, 255));
+ rect(80, 330, 20, 20);
+ fill(map(pointer_finger, 0, 1023, 0, 255));
+ rect(110, 330, 20, 20);
+}
 
 void serialEvent(Serial p) {
-
   inString = (myPort.readString());
   
   try {
@@ -189,10 +222,10 @@ void serialEvent(Serial p) {
       String dataval = dataStrings[i].substring(4);
     if (type.equals("DEL:")) {
         dt = float(dataval);
-        /*
+    /*
         print("Dt:");
         println(dt);
-        */
+     */
         
       } else if (type.equals("ACC:")) {
         String data[] = split(dataval, ',');
@@ -217,6 +250,14 @@ void serialEvent(Serial p) {
         x_fil = float(data[0]);
         y_fil = float(data[1]);
         z_fil = float(data[2]);
+      } else if (type.equals("FPi:")) {
+        pinky_finger = float(dataval);
+      } else if (type.equals("FRi:")) {
+        ring_finger = float(dataval);
+      } else if (type.equals("FMi:")) {
+        middle_finger = float(dataval);
+      } else if (type.equals("FPo:")) {
+        pointer_finger = float(dataval);
       }
     }
   } catch (Exception e) {
