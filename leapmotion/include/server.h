@@ -1,6 +1,7 @@
 #ifndef SERVER_H
 #define SERVER_H
 
+#include "findpoint.h"
 #include "Leap.h"
 
 class CustomListener : public Leap::Listener {

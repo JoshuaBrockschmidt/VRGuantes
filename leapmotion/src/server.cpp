@@ -4,11 +4,14 @@
 #include <GL/gl.h>
 #include <math.h>
 #include "exportppm.h"
+#include "findpoint.h"
 #include "Leap.h"
 #include "server.h"
 
 using std::cout;
 using std::endl;
+
+Tracker track = Tracker();
 
 int main(void)
 {
@@ -52,9 +55,13 @@ void CustomListener::onFrame(const Leap::Controller &ctrl)
 
 void CustomListener::onImages(const Leap::Controller &ctrl)
 {
-	cout << "Images: " << ctrl.images().count() << endl;
 	Leap::ImageList images = ctrl.images();
 	for (int i; i < 2; i++) {
 		Leap::Image img = images[i];
+		if (track.compare(&img)) {
+			/* Announce that position of point has changed */
+			Coord &pos = track.pos;
+			cout << "(" << pos.x << ", " << pos.y << ")" << endl;
+		}
 	}
 }
