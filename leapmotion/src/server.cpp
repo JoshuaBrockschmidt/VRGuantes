@@ -52,33 +52,9 @@ void CustomListener::onFrame(const Leap::Controller &ctrl)
 
 void CustomListener::onImages(const Leap::Controller &ctrl)
 {
-	const float finalH = 400;
-	const float finalW = 400;
-	static int imgCnt = 0;
-	static unsigned char final[(int)(finalW*finalH)];
-	//DEBUG
-	if (imgCnt > 1) return;
-	//EOF DEBUG
 	cout << "Images: " << ctrl.images().count() << endl;
 	Leap::ImageList images = ctrl.images();
-	for (int i; i < 2; i++, imgCnt++) {
+	for (int i; i < 2; i++) {
 		Leap::Image img = images[i];
-		const unsigned char *imgData = img.data();
-		const float *dist = img.distortion();
-		const int distW = img.distortionWidth();
-		const int distH = img.distortionHeight();
-		const int w = img.width();
-		const int h = img.height();
-		struct ppm_image outImg = {
-			img.width(), img.height(), img.data(),
-			img.bytesPerPixel()*img.width()*img.height()
-		};
-		const std::string filename = "test"+std::to_string(imgCnt)+".ppm";
-		if (ppm_save(outImg, filename) == (size_t)NULL) {
-			cout << "Could not create image file " <<
-				filename << endl;
-		} else {
-			cout << filename << " created" << endl;
-		}
 	}
 }
